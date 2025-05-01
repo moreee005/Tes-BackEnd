@@ -1,0 +1,64 @@
+// Definisi datasource menggunakan PostgreSQL
+datasource db {
+  provider = "postgresql"  // Gunakan PostgreSQL sebagai provider
+  url      = env("DATABASE_URL")  // Mengambil URL dari .env
+}
+
+// Generator untuk Prisma Client
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Model untuk tabel User
+model User {
+  id       Int       @id @default(autoincrement())
+  username String
+  password String
+  email    String    @unique
+  merchants Merchant[] // Relasi one-to-many dengan merchants
+  @@map("users")
+}
+
+// Model untuk tabel Merchant
+model Merchant {
+  id        Int       @id @default(autoincrement())
+  user_id   Int
+  name      String
+  user      User      @relation(fields: [user_id], references: [id])
+  products  Product[] // Relasi one-to-many dengan products merchants
+  @@map("merchants")
+}
+
+// Model untuk tabel Product
+model Product {
+  id          Int         @id @default(autoincrement())
+  merchant_id Int
+  name        String
+  description String?
+  merchant    Merchant    @relation(fields: [merchant_id], references: [id])
+  variations  Variation[] // Relasi one-to-many dengan variations
+  @@map("products")
+}
+
+// Model untuk tabel Variation
+model Variation {
+  id        Int      @id @default(autoincrement())
+  product_id Int
+  color     String?
+  size      String?
+  product   Product  @relation(fields: [product_id], references: [id])
+  stock     Stock[]  // Relasi one-to-many dengan stocks
+  @@unique([product_id, color, size]) // Kombinasi unik untuk variasi produk
+  @@map("variations")
+}
+
+// Model untuk tabel Stock
+model Stock {
+  id            Int        @id @default(autoincrement())
+  variation_id  Int
+  sku           String     @unique
+  stock_quantity Int       @default(0)
+  variation     Variation @relation(fields: [variation_id], references: [id])
+  @@map("stocks")  // Memastikan nama tabel di database adalah "stocks"
+
+}
